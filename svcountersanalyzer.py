@@ -5,8 +5,8 @@ import os, sys, re
 
 def todictionary():
     dct = findEachFile()
-    # pprint(dct)
     findTheWordSVCLI(dct)
+    pprint(dct)
     return ""
 
 def findEachFile():
@@ -29,7 +29,6 @@ def findTheWordSVCLI(dct):
     interesting_lst = list()
     for d,info in dct.items():
         fname = info['path']
-        print("PROCESSING FILE:", fname)
         with open( fname, 'r') as f:    #Opening files
             for l in f:
                 line = l.strip() # now we have each line
@@ -37,22 +36,18 @@ def findTheWordSVCLI(dct):
                 # New section starts or ends here
                 if "SVDIAG" in line and interesting_line:
                     interesting_line = False
-                    print("INTERESTING LINES END")
 
                 # Adding interesting line
                 if interesting_line:
-                    print(line)
                     interesting_lst.append(line)       #Adding line
                     continue
 
                 if line == "SVDIAG SVCLI: show interface inspection" and "show interface inspection" in line:
                     interesting_line = True
                     section_number = section_number + 1
-                    print("INTERESTING LINES START")
-                    print( line)
-        pprint(interesting_lst)
+        dct[d]=interesting_lst
+        interesting_lst = list()
         # Finding row values, column values, and sections
-        dct_to_append = dict()
         """ 
         Dct_structure : {"SVDIAG 
         SVCLI: show interface inspection":
@@ -64,12 +59,10 @@ def findTheWordSVCLI(dct):
         
         #print(part_indexes)
         #pprint(interesting_lst)
-        st = []
-        for x in interesting_lst:
-            if x not in st:
-                st.append(x)
-        return ""
-        break
+    return dct
+
+def findKeyValuePairs(dct):
+    pass
 
 if __name__ == "__main__":
     print(todictionary())
