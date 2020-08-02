@@ -27,34 +27,57 @@ def findTheWordSVCLI(dct):
     interesting_line = False     # Getting variables ready
     section_number = 0
     interesting_lst = list()
-    for d,info in dct.items():
+    # variable name = heading + countername + units
+    previous_line = ""
+    heading = ""
+    counter_name = ""
+    cmd = ""
+    tmp=[]
+    units = list()
+    for d,info in dct.items(): # for each file
         fname = info['path']
         with open( fname, 'r') as f:    #Opening files
+            ctr = 0
             for l in f:
                 line = l.strip() # now we have each line
 
                 # New section starts or ends here
                 if "SVDIAG" in line and interesting_line:
                     interesting_line = False
+                    break
 
                 # Adding interesting line
                 if interesting_line:
-                    interesting_lst.append(line)       #Adding line
-                    continue
+                    if line.startswith("===="):
+                        heading = previous_line.replace(" ","_")
+                        print("heading:", heading)
 
-                if line == "SVDIAG SVCLI: show interface inspection" and "show interface inspection" in line:
+                    elif line.startswith("----"):
+                        units = previous_line.split()
+                        units = units[1:]
+                        if units[0].isalpha():
+                            print("units:", units)
+                    
+                    elif len(line) < 10:
+                        continue
+
+                    else: # This is line has counter values
+                        words = line.split()
+                        counter = words[0]
+                        for value,unit in zip(words[1:],units):
+                            print(heading,counter,unit,value)
+                            k = "-".join([heading,counter,unit])
+                            dct[d][k] = value
+                    print(">>>", line)
+
+                if line.startswith("SVDIAG SVCLI") and "show interface inspection" in line:
                     interesting_line = True
+                    cmd = line[7:]
+                    print("cmd:", cmd)
                     section_number = section_number + 1
-        dct[d]=interesting_lst
-        interesting_lst = list()
+                ctr = ctr + 1
+                previous_line = line
         # Finding row values, column values, and sections
-        """ 
-        Dct_structure : {"SVDIAG 
-        SVCLI: show interface inspection":
-        {<section nname i.e. IP CONTROL PATH>:
-        {<row-column i.e. AdminShunts-Upstream(bytes)>:
-                <value i.e. 0>}}}
-        """
         #part_indexes = interesting_lst.index("============")
         
         #print(part_indexes)
