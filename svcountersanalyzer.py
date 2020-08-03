@@ -1,13 +1,81 @@
 #!/usr/bin/python3
 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+import matplotlib
 from pprint import pprint
-import os, sys, re
+import os, sys, re, sqlite3, PySimpleGUI as sg
+import numpy as np
+import inspect
+matplotlib.use('TkAgg')
 
 def todictionary():
     dct = findEachFile()
     findTheWordSVCLI(dct)
-    pprint(dct)
+    #pprint(dct)
+    if os.path.isfile('./analyse.db'):
+        os.remove("./analyse.db")
+    conn = create_db()
+    grapher(conn)
+    db_writer( conn, dct)
+    #counters = get_all_counters( conn)
+    # Display counters
+    #counter = ""
+    #get_all_values_for_counters( conn, counter)
     return ""
+
+def db_writer( conn, dct):
+    ctr = 0
+    for timestamp,ctrs in dct.items():
+        for counter_name,value in ctrs.items():
+            insert_db(conn, counter_name, timestamp, value, "", "")
+            ctr = ctr + 1
+            print(ctr)
+    grapher( conn)
+
+def grapher( conn):
+    counters = get_all_counters( conn)
+    sg.theme('LightGreen')
+    figure_w, figure_h = 650, 650
+    # define the form layout
+    listbox_values = list(fig_dict)
+    col_listbox = [[sg.Listbox(values=listbox_values, change_submits=True, size=(28, len(listbox_values)), key='-LISTBOX-')],
+                [sg.Text(' ' * 12), sg.Exit(size=(5, 2))]]
+
+    col_multiline = sg.Col([[sg.MLine(size=(70, 35), key='-MULTILINE-')]])
+    col_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='-CANVAS-')]])
+    col_instructions = sg.Col([[sg.Pane([col_canvas, col_multiline], size=(800, 600))],
+                            [sg.Text('Grab square above and slide upwards to view source code for graph')]])
+
+    layout = [[sg.Text('Matplotlib Plot Test', font=('ANY 18'))],
+            [sg.Col(col_listbox), col_instructions], ]
+
+    # create the form and show it without the plot
+    window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
+                    layout, resizable=True, finalize=True)
+
+    canvas_elem = window['-CANVAS-']
+    multiline_elem = window['-MULTILINE-']
+    figure_agg = None
+
+    while True:
+        event, values = window.read()
+        if event in (None, 'Exit'):
+            break
+
+        if figure_agg:
+            # ** IMPORTANT ** Clean up previous drawing before drawing again
+            delete_figure_agg(figure_agg)
+        # get first listbox item chosen (returned as a list)
+        choice = values['-LISTBOX-'][0]
+        # get function to call from the dictionary
+        func = fig_dict[choice]
+        # show source code to function in multiline
+        window['-MULTILINE-'].update(inspect.getsource(func))
+        fig = func()                                    # call function to get the figure
+        figure_agg = draw_figure(
+            window['-CANVAS-'].TKCanvas, fig)  # draw the figure
+
 
 def findEachFile():
     dct = {}
@@ -34,6 +102,8 @@ def findTheWordSVCLI(dct):
     cmd = ""
     tmp=[]
     units = list()
+
+
     for d,info in dct.items(): # for each file
         fname = info['path']
         with open( fname, 'r') as f:    #Opening files
@@ -50,7 +120,7 @@ def findTheWordSVCLI(dct):
                 if interesting_line:
                     if line.startswith("===="):
                         heading = previous_line.replace(" ","_")
-                        print("heading:", heading)
+                        #print("heading:", heading)
 
                     elif line.startswith("----"):
                         units = previous_line.split()
@@ -66,14 +136,21 @@ def findTheWordSVCLI(dct):
                         counter = words[0]
                         for value,unit in zip(words[1:],units):
                             print(heading,counter,unit,value)
+                            if unit.isdigit():
+                                unit2 = value
+                                value = unit
+                                unit = unit2
+                            value = value.replace(",","")
+                            if value.isdigit():
+                                value = int(value)
                             k = "-".join([heading,counter,unit])
                             dct[d][k] = value
-                    print(">>>", line)
+                    #print(">>>", line)
 
                 if line.startswith("SVDIAG SVCLI") and "show interface inspection" in line:
                     interesting_line = True
                     cmd = line[7:]
-                    print("cmd:", cmd)
+                    #print("cmd:", cmd)
                     section_number = section_number + 1
                 ctr = ctr + 1
                 previous_line = line
@@ -84,8 +161,66 @@ def findTheWordSVCLI(dct):
         #pprint(interesting_lst)
     return dct
 
-def findKeyValuePairs(dct):
-    pass
+def create_db():
+    database = r"analyzer.db"
+    # create a database connection
+    conn = None
+    try:
+        conn = sqlite3.connect(database)
+        print("Sqlite3 version", sqlite3.version)
+    except exception as e:
+        print("DB create error", e)
+    #finally:
+    #    if conn:
+    #        conn.close()
+
+    sql_create_table = """ CREATE TABLE IF NOT EXISTS counters (
+                                        counter text NOT NULL,
+                                        timestamp text NOT NULL,
+                                        value integer NOT NULL,
+                                        type text,
+                                        tags text
+                                    ); """
+    if conn is None:
+        print("Error! cannot create the database connection.")
+        return False
+
+    try:
+        c = conn.cursor()
+        c.execute(sql_create_table)
+    except Exception as e:
+        print("Error executing SQL:", e)
+
+    return conn
+
+def insert_db(conn, counter_name, timestamp, value, c_type, tags):
+    sql = ''' INSERT INTO counters(counter, timestamp, value, type, tags)
+              VALUES(?,?,?,?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, (counter_name, timestamp, value, c_type, tags))
+    conn.commit()
+
+    return cur.lastrowid
+
+
+def get_all_counters( conn):
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT counter FROM counters")
+
+    rows = cur.fetchall()
+    return rows
+
+def get_all_values_for_counters( conn, counter):
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM counters WHERE counter='{counter}' ORDER BY timestamp")
+
+    rows = cur.fetchall()
+    return rows
+
+
 
 if __name__ == "__main__":
-    print(todictionary())
+    #conn = create_db()
+    #insert_db( conn, 'POLICY_ENGINE-OtherShunts-Unknown', '2020-04-23-03', 3382927, '', '')
+
+    todictionary()

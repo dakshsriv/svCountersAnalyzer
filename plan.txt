@@ -1,0 +1,25 @@
+problem 1: These are are not counters:value types:
+                   'POLICY_ENGINE-IP-156': 'CONTROL',
+                   'POLICY_ENGINE-IP-2': 'PATH',
+
+Problem 2: values should be numbers
+                   'POLICY_ENGINE-AdminDiscards-Upstream(bytes)': '314,985,153,686',
+                   'POLICY_ENGINE-AdminDiscards-Upstream(pkts)': '1,765,624,632',
+
+Then you can insert these values into DB
+
+
+
+Get a list of all counters from DB
+SELECT DISTINCT counter FROM counters;
+
+show list in the left pane
+
+When someone selects a counter
+
+Then  get all values of a specific counter
+SELECT * FROM counters WHERE counter='POLICY_ENGINE-AdminDiscards-Upstream(bytes)' ORDER BY timestamp;
+
+show the graph!!!
+
+

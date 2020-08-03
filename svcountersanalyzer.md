@@ -49,3 +49,7 @@
 >> ### vi)  Dct[value of index of ax-1 for ax in a] is dct2
 
 ## Step 4: Store in dictionary
+
+# Complete
+
+## Step 5: Store in sqlite db: /home/daksh/Projects/svCountersAnalyzer/analyze.db
