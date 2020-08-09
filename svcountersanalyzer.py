@@ -16,7 +16,8 @@ def todictionary():
     if os.path.isfile('./analyse.db'):
         os.remove("./analyse.db")
     conn = create_db()
-    grapher(conn)
+    grapher( conn)
+    sys.exit()
     db_writer( conn, dct)
     #counters = get_all_counters( conn)
     # Display counters
@@ -35,11 +36,15 @@ def db_writer( conn, dct):
 
 def grapher( conn):
     counters = get_all_counters( conn)
+    counters_list = [v for (v,) in counters]
+    fig_dict = {}
+    for counter in counters:
+        fig_dict[str(counter)] = counter
     sg.theme('LightGreen')
     figure_w, figure_h = 650, 650
     # define the form layout
     listbox_values = list(fig_dict)
-    col_listbox = [[sg.Listbox(values=listbox_values, change_submits=True, size=(28, len(listbox_values)), key='-LISTBOX-')],
+    col_listbox = [[sg.Listbox(values=counters_list, change_submits=True, size=(50, len(listbox_values)), key='-LISTBOX-')],
                 [sg.Text(' ' * 12), sg.Exit(size=(5, 2))]]
 
     col_multiline = sg.Col([[sg.MLine(size=(70, 35), key='-MULTILINE-')]])
@@ -57,7 +62,7 @@ def grapher( conn):
     canvas_elem = window['-CANVAS-']
     multiline_elem = window['-MULTILINE-']
     figure_agg = None
-
+    mkgraph( conn, counters[-1])
     while True:
         event, values = window.read()
         if event in (None, 'Exit'):
@@ -74,8 +79,54 @@ def grapher( conn):
         window['-MULTILINE-'].update(inspect.getsource(func))
         fig = func()                                    # call function to get the figure
         figure_agg = draw_figure(
-            window['-CANVAS-'].TKCanvas, fig)  # draw the figure
+            window['-CANVAS-'].TKCanvas, mkgraph(conn, counter[-1]))  # draw the figure
 
+def PyplotSimple():
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    names = ['group_a', 'group_b', 'group_c']
+    values = [1, 10, 100]
+    
+    # evenly sampled time at 200ms intervals
+    t = np.arange(0., 5., 0.2)
+
+    # red dashes, blue squares and green triangles
+    plt.plot(t, t, 'r--', t, t ** 2, 'bs', t, t ** 3, 'g^')
+
+    fig = plt.gcf()  # get the figure to show
+    return fig
+
+def mkgraph( conn, counter):
+    lv = get_all_values_for_counters( conn, "POLICY_ENGINE-OtherShunts-Upstream(pkts)")
+    pprint(lv)
+    names = ['group_a', 'group_b', 'group_c']
+    values = [1, 10, 100]
+
+    plt.figure(figsize=(9, 3))
+
+    """plt.subplot(131)-                    
+    plt.bar(names, values)"""
+    """plt.subplot(132)
+    plt.scatter(names, values)"""
+    # Above four lines are for bar and scatter plots
+    # Next two lines are for line graph
+    plt.subplot(131)
+    plt.plot(names, values)
+    #plt.suptitle('Categorical Plotting')
+    plt.show()
+
+
+
+def delete_figure_agg(figure_agg):
+    figure_agg.get_tk_widget().forget()
+    plt.close('all')
+
+def draw_figure(canvas, figure):
+    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    figure_canvas_agg.draw()
+    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+    return figure_canvas_agg
 
 def findEachFile():
     dct = {}
@@ -87,7 +138,6 @@ def findEachFile():
             vl = v[:-4]
             if vl not in dct:
                 dct[vl] = dict()
-            dct[vl]['time'] = vl
             dct[vl]['path'] = os.path.join(root, name)
     return dct
 
@@ -98,9 +148,6 @@ def findTheWordSVCLI(dct):
     # variable name = heading + countername + units
     previous_line = ""
     heading = ""
-    counter_name = ""
-    cmd = ""
-    tmp=[]
     units = list()
 
 
@@ -212,8 +259,8 @@ def get_all_counters( conn):
 
 def get_all_values_for_counters( conn, counter):
     cur = conn.cursor()
-    cur.execute(f"SELECT * FROM counters WHERE counter='{counter}' ORDER BY timestamp")
-
+    print(f"counter is {counter}")
+    cur.execute(f"SELECT * FROM counters WHERE counter={'counter'} ORDER BY timestamp")
     rows = cur.fetchall()
     return rows
 
