@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-
-
+#!/usr/bin/env python
+#!/usr/bin/env python
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,8 +8,6 @@ import PySimpleGUI as sg
 import matplotlib
 matplotlib.use('TkAgg')
 from pprint import pprint
-
-from svcountersanalyzer import get_all_counters,get_all_values_for_counters,open_db
 
 
 """
@@ -25,10 +22,10 @@ Basic steps are:
 """
 
 
-def PyplotFormatstr(counter="POLICY_ENGINE-OtherShunts-Unknown(pkts)"):
-    conn = open_db()
-    vlufc = get_all_values_for_counters(conn, counter)
-    pprint(vlufc)
+
+
+def PyplotFormatstr():
+
     def f(t):
         return np.exp(-t) * np.cos(2*np.pi*t)
 
@@ -39,37 +36,10 @@ def PyplotFormatstr(counter="POLICY_ENGINE-OtherShunts-Unknown(pkts)"):
     plt.subplot(211)
     plt.plot(t1, f(t1), 'bo', t2, f(t2), 'k')
 
+    plt.subplot(212)
+    plt.plot(t2, np.cos(2*np.pi*t2), 'r--')
     fig = plt.gcf()             # get the figure to show
     return fig
-
-
-
-    def get_rgb():
-        Z, extent = get_demo_image()
-
-        Z[Z < 0] = 0.
-        Z = Z / Z.max()
-
-        R = Z[:13, :13]
-        G = Z[2:, 2:]
-        B = Z[:13, 2:]
-
-        return R, G, B
-
-    fig = plt.figure(1)
-    ax = RGBAxes(fig, [0.1, 0.1, 0.8, 0.8])
-
-    r, g, b = get_rgb()
-    kwargs = dict(origin="lower", interpolation="nearest")
-    ax.imshow_rgb(r, g, b, **kwargs)
-
-    ax.RGB.set_xlim(0., 9.5)
-    ax.RGB.set_ylim(0.9, 10.6)
-
-    plt.draw()
-    return plt.gcf()
-
-#  The magic function that makes it possible.... glues together tkinter and pyplot using Canvas Widget
 
 
 def draw_figure(canvas, figure):
@@ -91,14 +61,16 @@ def delete_figure_agg(figure_agg):
 
 # print(inspect.getsource(PyplotSimple))
 
-conn = open_db()
-c = get_all_counters( conn)
-counters_list = get_all_counters( conn)
+
+fig_dict = {'Pyplot Simple': PyplotFormatstr, 'Pyplot Formatstr': PyplotFormatstr, 'PyPlot Three': PyplotFormatstr,
+            'Unicode Minus': PyplotFormatstr, 'Pyplot Scales': PyplotFormatstr, 'Axes Grid': PyplotFormatstr}
+
 
 sg.theme('LightGreen')
 figure_w, figure_h = 650, 650
 # define the form layout
-col_listbox = [[sg.Listbox(values=counters_list, change_submits=True, size=(28, len(counters_list)), key='-LISTBOX-')],
+listbox_values = list(fig_dict)
+col_listbox = [[sg.Listbox(values=listbox_values, change_submits=True, size=(28, len(listbox_values)), key='-LISTBOX-')],
                [sg.Text(' ' * 12), sg.Exit(size=(5, 2))]]
 
 col_multiline = sg.Col([[sg.MLine(size=(70, 35), key='-MULTILINE-')]])
@@ -126,13 +98,13 @@ while True:
         # ** IMPORTANT ** Clean up previous drawing before drawing again
         delete_figure_agg(figure_agg)
     # get first listbox item chosen (returned as a list)
-    pprint(values)
-    #choice = values['-LISTBOX-'][0]
+    choice = values['-LISTBOX-'][0]
     # get function to call from the dictionary
-    choice = 'Pyplot Formatstr'
-
-    # get values as dic from get_all_values_for_counters
-    # pass the dict to PyplotFormatstr() to plot the graph
-    fig = PyplotFormatstr()
-
-    figure_agg = draw_figure( window['-CANVAS-'].TKCanvas, fig)  # draw the figure
+    pprint(choice)
+    func = fig_dict[choice]
+    # show source code to function in multiline
+    window['-MULTILINE-'].update(inspect.getsource(func))
+    fig = func()                                    # call function to get the figure
+    pprint (fig)
+    figure_agg = draw_figure(
+        window['-CANVAS-'].TKCanvas, fig)  # draw the figure

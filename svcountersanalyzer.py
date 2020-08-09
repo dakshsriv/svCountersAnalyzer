@@ -9,6 +9,21 @@ import numpy as np
 import inspect
 matplotlib.use('TkAgg')
 
+
+def open_db( database = r"analyzer.db"):
+
+    if not os.path.isfile(database):
+        print("File not found")
+        return None
+
+    conn = None
+    try:
+        conn = sqlite3.connect(database)
+        print("Sqlite3 version", sqlite3.version)
+    except exception as e:
+        print("DB create error", e)
+    return conn
+
 def todictionary():
     dct = findEachFile()
     findTheWordSVCLI(dct)
@@ -87,7 +102,7 @@ def PyplotSimple():
 
     names = ['group_a', 'group_b', 'group_c']
     values = [1, 10, 100]
-    
+
     # evenly sampled time at 200ms intervals
     t = np.arange(0., 5., 0.2)
 
@@ -255,7 +270,9 @@ def get_all_counters( conn):
     cur.execute("SELECT DISTINCT counter FROM counters")
 
     rows = cur.fetchall()
-    return rows
+    counters = { a:a for (a,) in rows if a not in ['time','path'] }
+    #pprint(counters)
+    return counters
 
 def get_all_values_for_counters( conn, counter):
     cur = conn.cursor()
