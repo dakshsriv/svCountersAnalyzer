@@ -19,7 +19,7 @@ def open_db( database = r"analyzer.db"):
     conn = None
     try:
         conn = sqlite3.connect(database)
-        print("Sqlite3 version", sqlite3.version)
+        #print("Sqlite3 version", sqlite3.version)
     except exception as e:
         print("DB create error", e)
     return conn
@@ -270,16 +270,19 @@ def get_all_counters( conn):
     cur.execute("SELECT DISTINCT counter FROM counters")
 
     rows = cur.fetchall()
-    counters = { a:a for (a,) in rows if a not in ['time','path'] }
+    counters = [ a for (a,) in rows if a not in ['time','path'] ]
     #pprint(counters)
     return counters
 
 def get_all_values_for_counters( conn, counter):
     cur = conn.cursor()
-    print(f"counter is {counter}")
-    cur.execute(f"SELECT * FROM counters WHERE counter={'counter'} ORDER BY timestamp")
+    #print(f"counter is {counter}")
+    cur.execute(f"SELECT * FROM counters WHERE counter='{counter}' ORDER BY timestamp")
     rows = cur.fetchall()
-    return rows
+    values = dict()
+    if len(rows)>0:
+        values = { ts:value for (counter,ts, value,f_type,f_tags) in rows if counter not in ['time','path'] }
+    return values
 
 
 

@@ -53,3 +53,9 @@
 # Complete
 
 ## Step 5: Store in sqlite db: /home/daksh/Projects/svCountersAnalyzer/analyze.db
+
+TODO:
+
+1. Show multiple plots in same graph
+
+2. Find out how to display line graph

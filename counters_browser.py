@@ -25,20 +25,21 @@ Basic steps are:
 """
 
 
-def PyplotFormatstr(counter="POLICY_ENGINE-OtherShunts-Unknown(pkts)"):
+def PyplotFormatstr(counter):
     conn = open_db()
-    vlufc = get_all_values_for_counters(conn, counter)
-    pprint(vlufc)
-    def f(t):
-        return np.exp(-t) * np.cos(2*np.pi*t)
-
-    t1 = np.arange(0.0, 5.0, 0.1)
-    t2 = np.arange(0.0, 5.0, 0.02)
+    values = get_all_values_for_counters(conn, counter)
+    """
+    print("values are:", end='')
+    pprint(values)
+    """
 
     plt.figure(1)
     plt.subplot(211)
-    plt.plot(t1, f(t1), 'bo', t2, f(t2), 'k')
-
+    i = 0
+    for k,v in values.items():
+        #plt.plot(i,v, color='green', marker='.', linestyle='solid', label=k)
+        plt.plot(k,v,"bo")
+        i = i + 1
     fig = plt.gcf()             # get the figure to show
     return fig
 
@@ -98,8 +99,8 @@ counters_list = get_all_counters( conn)
 sg.theme('LightGreen')
 figure_w, figure_h = 650, 650
 # define the form layout
-col_listbox = [[sg.Listbox(values=counters_list, change_submits=True, size=(28, len(counters_list)), key='-LISTBOX-')],
-               [sg.Text(' ' * 12), sg.Exit(size=(5, 2))]]
+col_listbox = [[sg.Listbox(values=counters_list, change_submits=True, size=(48, len(counters_list)), key='-LISTBOX-')],
+               [sg.Text(' ' * 24), sg.Exit(size=(5, 2))]]
 
 col_multiline = sg.Col([[sg.MLine(size=(70, 35), key='-MULTILINE-')]])
 col_canvas = sg.Col([[sg.Canvas(size=(figure_w, figure_h), key='-CANVAS-')]])
@@ -107,7 +108,7 @@ col_instructions = sg.Col([[sg.Pane([col_canvas, col_multiline], size=(800, 600)
                            [sg.Text('Grab square above and slide upwards to view source code for graph')]])
 
 layout = [[sg.Text('Matplotlib Plot Test', font=('ANY 18'))],
-          [sg.Col(col_listbox), col_instructions], ]
+          [sg.Col(col_listbox), col_instructions] ]
 
 # create the form and show it without the plot
 window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
@@ -117,22 +118,29 @@ canvas_elem = window['-CANVAS-']
 multiline_elem = window['-MULTILINE-']
 figure_agg = None
 
+print("values under listbox tag: " , end='')
+pprint(window['-LISTBOX-'])
 while True:
     event, values = window.read()
-    if event in (None, 'Exit'):
+    if event in (sg.WIN_CLOSED, 'Exit'):
         break
 
     if figure_agg:
         # ** IMPORTANT ** Clean up previous drawing before drawing again
         delete_figure_agg(figure_agg)
     # get first listbox item chosen (returned as a list)
+    """
+    print("event: ", end='')
+    pprint(event)
+    print("values: ", end='')
     pprint(values)
+    """
     #choice = values['-LISTBOX-'][0]
     # get function to call from the dictionary
-    choice = 'Pyplot Formatstr'
-
+    choice = values["-LISTBOX-"][0]
+    print( choice)
     # get values as dic from get_all_values_for_counters
     # pass the dict to PyplotFormatstr() to plot the graph
-    fig = PyplotFormatstr()
+    fig = PyplotFormatstr(choice)
 
     figure_agg = draw_figure( window['-CANVAS-'].TKCanvas, fig)  # draw the figure
