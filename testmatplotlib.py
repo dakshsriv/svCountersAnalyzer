@@ -1,17 +1,16 @@
 from matplotlib import pyplot as plt
-names = ['group_a', 'group_b', 'group_c']
-values = [1, 10, 100]
+import numpy as np
+from pprint import pprint
 
-plt.figure(figsize=(9, 3))
+x = np.arange(0,4)
+#y1 = np.array([1,2,4,3])
+y1 = [1,2,4,3]
+#y2 = np.array([5,2,1,3])
+y2 = [5,2,1,3]
+pprint(y1)
+# y2 should go on top, so shift them up
+#y2s = y1+y2
 
-"""plt.subplot(131)
-plt.bar(names, values)"""
-"""plt.subplot(132)
-plt.scatter(names, values)"""
-# Above four lines are for bar and scatter plots
-# Next two lines are for line graph
-plt.subplot(133)
-plt.plot(names, values)
-plt.suptitle('Categorical Plotting')
+plt.plot(x,y1)
+plt.plot(x,y2)
 plt.show()
-

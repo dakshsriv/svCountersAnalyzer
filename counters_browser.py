@@ -36,10 +36,15 @@ def PyplotFormatstr(counter):
     plt.figure(1)
     plt.subplot(211)
     i = 0
+    """
     for k,v in values.items():
         #plt.plot(i,v, color='green', marker='.', linestyle='solid', label=k)
         plt.plot(k,v,"bo")
         i = i + 1
+    """
+    ts = [x for x,y in values.items()]
+    vlus = [y for x,y in values.items()]
+    plt.plot(ts,vlus)
     fig = plt.gcf()             # get the figure to show
     return fig
 
