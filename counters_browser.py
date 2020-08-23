@@ -38,8 +38,6 @@ def choicesManager(previous_status, clicked):
 def PyplotFormatstr(counters):
     conn = open_db()
     for x in counters:
-        i = 1
-        subv = 210 + 1
         values = get_all_values_for_counters(conn, x)
         ts = [x for x, y in values.items()]
         vlus = [y for x, y in values.items()]
@@ -64,31 +62,7 @@ def PyplotFormatstr(counters):
     fig = plt.gcf()  # get the figure to show
     return fig
 
-    def get_rgb():
-        Z, extent = get_demo_image()
-
-        Z[Z < 0] = 0.0
-        Z = Z / Z.max()
-
-        R = Z[:13, :13]
-        G = Z[2:, 2:]
-        B = Z[:13, 2:]
-
-        return R, G, B
-
-    fig = plt.figure(1)
-    ax = RGBAxes(fig, [0.1, 0.1, 0.8, 0.8])
-
-    r, g, b = get_rgb()
-    kwargs = dict(origin="lower", interpolation="nearest")
-    ax.imshow_rgb(r, g, b, **kwargs)
-
-    ax.RGB.set_xlim(0.0, 9.5)
-    ax.RGB.set_ylim(0.9, 10.6)
-
-    plt.draw()
-    return plt.gcf()
-
+    
 
 #  The magic function that makes it possible.... glues together tkinter and pyplot using Canvas Widget
 
