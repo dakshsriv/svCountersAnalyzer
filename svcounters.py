@@ -11,7 +11,23 @@ from get_source_dir import getdir
 matplotlib.use('TkAgg')
 
 
-def open_db( database = r"analyzer.db"):
+def open_db( database):
+        # get values as dic from get_all_values_for_counters
+        # pass the dict to PyplotFormatstr() to plot the graph
+
+ 
+
+
+
+
+
+
+        # get values as dic from get_all_values_for_counters
+        # pass the dict to PyplotFormatstr() to plot the graph
+
+
+
+
 
     if not os.path.isfile(database):
         print("File not found")
@@ -25,15 +41,15 @@ def open_db( database = r"analyzer.db"):
         print("DB create error", e)
     return conn
 
-def todictionary():
-    dct = findEachFile()
+def todictionary(rt, database, conn):
+    dct = findEachFile(rt)
     findTheWordSVCLI(dct)
     #pprint(dct)
-    if os.path.isfile('./analyse.db'):
-        os.remove("./analyse.db")
-    conn = create_db()
-    db_writer( conn, dct)
-    sys.exit()
+    if os.path.isfile('{database}'):
+        os.remove("{database}")
+    #db_writer( conn, dct)
+    #sys.exit()
+
     #counters = get_all_counters( conn)
     # Display counters
     #counter = ""
@@ -41,19 +57,16 @@ def todictionary():
     return ""
 
 def db_writer( conn, dct):
-    ctr = 0
     for timestamp,ctrs in dct.items():
         for counter_name,value in ctrs.items():
             insert_db(conn, counter_name, timestamp, value, "", "")
-            ctr = ctr + 1
-            print(ctr)
 
-def findEachFile():
+def findEachFile(root):
     dct = {}
     for root, dirs, files in os.walk( getdir(), topdown=False):
         for name in files:
             date = os.path.basename(root)
-            print("date is {date}")
+            print(f"date is {date}")
             hour = name.split('_')[1]
             v = "-".join([date, hour])
             vl = v[:-4]
@@ -193,6 +206,7 @@ def get_all_values_for_counters( conn, counter):
 
 
 if __name__ == "__main__":
+
     #conn = create_db()
     #insert_db( conn, 'POLICY_ENGINE-OtherShunts-Unknown', '2020-04-23-03', 3382927, '', '')
 
