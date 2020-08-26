@@ -146,6 +146,7 @@ Sessionx.vim
 
 # Auto-generated tag files
 tags
+*/*.db
 
 # Persistent undo
 [._]*.un~
@@ -156,3 +157,4 @@ tags
 *~
 */venv
 # End of https://www.gitignore.io/api/vim,ssh,linux,python
+

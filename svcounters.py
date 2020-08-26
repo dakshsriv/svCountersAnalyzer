@@ -15,19 +15,8 @@ def open_db( database):
         # get values as dic from get_all_values_for_counters
         # pass the dict to PyplotFormatstr() to plot the graph
 
- 
-
-
-
-
-
-
         # get values as dic from get_all_values_for_counters
         # pass the dict to PyplotFormatstr() to plot the graph
-
-
-
-
 
     if not os.path.isfile(database):
         print("File not found")
@@ -38,22 +27,13 @@ def open_db( database):
         conn = sqlite3.connect(database)
         #print("Sqlite3 version", sqlite3.version)
     except exception as e:
-        print("DB create error", e)
+        print("DB open error", e)
     return conn
 
-def todictionary(rt, database, conn):
+def to_dictionary(rt, conn):
     dct = findEachFile(rt)
     findTheWordSVCLI(dct)
-    #pprint(dct)
-    if os.path.isfile('{database}'):
-        os.remove("{database}")
-    #db_writer( conn, dct)
-    #sys.exit()
-
-    #counters = get_all_counters( conn)
-    # Display counters
-    #counter = ""
-    #get_all_values_for_counters( conn, counter)
+    db_writer( conn, dct)
     return ""
 
 def db_writer( conn, dct):
@@ -63,16 +43,18 @@ def db_writer( conn, dct):
 
 def findEachFile(root):
     dct = {}
-    for root, dirs, files in os.walk( getdir(), topdown=False):
+    for root, dirs, files in os.walk( root, topdown=False):
+        date = os.path.basename(root)
         for name in files:
-            date = os.path.basename(root)
-            print(f"date is {date}")
-            hour = name.split('_')[1]
-            v = "-".join([date, hour])
-            vl = v[:-4]
-            if vl not in dct:
-                dct[vl] = dict()
-            dct[vl]['path'] = os.path.join(root, name)
+            try:
+                hour = name.split('_')[1]
+                v = "-".join([date, hour])
+                vl = v[:-4]
+                if vl not in dct:
+                    dct[vl] = dict()
+                dct[vl]['path'] = os.path.join(root, name)
+            except:
+                pass
     return dct
 
 def findTheWordSVCLI(dct):
@@ -106,9 +88,6 @@ def findTheWordSVCLI(dct):
                     elif line.startswith("----"):
                         units = previous_line.split()
                         units = units[1:]
-                        if units[0].isalpha():
-                            print("units:", units)
-                    
                     elif len(line) < 10:
                         continue
 
@@ -116,7 +95,6 @@ def findTheWordSVCLI(dct):
                         words = line.split()
                         counter = words[0]
                         for value,unit in zip(words[1:],units):
-                            print(heading,counter,unit,value)
                             if unit.isdigit():
                                 unit2 = value
                                 value = unit
@@ -129,6 +107,7 @@ def findTheWordSVCLI(dct):
                     #print(">>>", line)
 
                 if line.startswith("SVDIAG SVCLI") and "show interface inspection" in line:
+                #if line.startswith("SVDIAG SVCLI"):
                     interesting_line = True
                     cmd = line[7:]
                     #print("cmd:", cmd)
@@ -142,19 +121,18 @@ def findTheWordSVCLI(dct):
         #pprint(interesting_lst)
     return dct
 
-def create_db():
-    database = r"analyzer.db"
-    # create a database connection
+def create_db(database):
+    try:
+        if os.path.isfile(database):
+            os.remove(database)
+    except exception as e:
+        print("DB remove error", e)
+
     conn = None
     try:
         conn = sqlite3.connect(database)
-        print("Sqlite3 version", sqlite3.version)
     except exception as e:
         print("DB create error", e)
-    #finally:
-    #    if conn:
-    #        conn.close()
-
     sql_create_table = """ CREATE TABLE IF NOT EXISTS counters (
                                         counter text NOT NULL,
                                         timestamp text NOT NULL,
